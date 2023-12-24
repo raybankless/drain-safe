@@ -1,7 +1,14 @@
-import React, { useCallback } from 'react'
+import React from 'react'
 import styled from 'styled-components'
-import { Button, Title } from '@gnosis.pm/safe-react-components'
+import Balances from './components/BalancesTable';
 import { useSafeAppsSDK } from '@gnosis.pm/safe-apps-react-sdk'
+import { useSafeBalances } from './hooks/useSafeBalances';
+
+import { Title as OriginalTitle } from '@gnosis.pm/safe-react-components'
+
+const Title = styled(OriginalTitle)`
+color: white;
+`;
 
 const Container = styled.div`
   padding: 1rem;
@@ -11,47 +18,23 @@ const Container = styled.div`
   justify-content: center;
   align-items: center;
   flex-direction: column;
-`
-
-const Link = styled.a`
-  margin-top: 8px;
-`
+`;
 
 const SafeApp = (): React.ReactElement => {
-  const { sdk, safe } = useSafeAppsSDK()
+  const { sdk, safe } = useSafeAppsSDK();
+  const [balances] = useSafeBalances(sdk);
 
-  const submitTx = useCallback(async () => {
-    try {
-      const { safeTxHash } = await sdk.txs.send({
-        txs: [
-          {
-            to: safe.safeAddress,
-            value: '0',
-            data: '0x',
-          },
-        ],
-      })
-      console.log({ safeTxHash })
-      const safeTx = await sdk.txs.getBySafeTxHash(safeTxHash)
-      console.log({ safeTx })
-    } catch (e) {
-      console.error(e)
-    }
-  }, [safe, sdk])
+  console.log({ balances });
 
   return (
     <Container>
-      <Title size="md">Safe: {safe.safeAddress}</Title>
-
-      <Button size="lg" color="primary" onClick={submitTx}>
-        Click to send a test transaction
-      </Button>
-
-      <Link href="https://github.com/gnosis/safe-apps-sdk" target="_blank" rel="noreferrer">
-        Documentation
-      </Link>
+      <Title size="md" >Safe: {safe.safeAddress}</Title>
+      <Balances balances={balances} />
+      {/* <Button size="lg" color="primary">
+        Send the assets
+      </Button> */}
     </Container>
-  )
-}
+  );
+};
 
-export default SafeApp
+export default SafeApp;
