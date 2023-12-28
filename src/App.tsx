@@ -46,7 +46,7 @@ const SafeApp = (): React.ReactElement => {
     <Container>
       <Title size="md">Safe: {safe.safeAddress}</Title>
       <BalancesTable balances={balances} />
-      {/*<SobolAPI />*/}
+      <SobolAPI />
       <div>
         {error && <p>Error fetching data: {error}</p>}
         {sobolData && <pre>{JSON.stringify(sobolData, null, 2)}</pre>}

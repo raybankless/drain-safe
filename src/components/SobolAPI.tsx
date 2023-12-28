@@ -1,46 +1,78 @@
-const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYXV0b21hdGVkIiwia2lkIjoiblNYdzJWenhmaSIsIm9pZCI6IkxtWTJLZ1pmcTQiLCJ1aWQiOiJHUnZfUWgxTGE0IiwiaWF0IjoxNzAzNDQzNDkyLCJleHAiOjE3MzQ5Nzk0OTJ9.m3AaDWMlO00vEd7v6VqRCR8F22_ujKdN1m9RVD24CHo';
-const addressesApiUrl = 'https://sobol.io/d/api/v1/org/LmY2KgZfq4/addresses';
-const teamsApiUrl = 'https://sobol.io/d/api/v1/org/LmY2KgZfq4/teams';
-// The CORS Anywhere proxy URL
-const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+import React, { useEffect, useState } from 'react';
+import { Table } from '@gnosis.pm/safe-react-components';
 
-// Combined URL with the proxy
-const proxiedAddressUrl = `${proxyUrl}${addressesApiUrl}`;
-const proxiedTeamsUrl = `${proxyUrl}${teamsApiUrl}`;
-
-const headers = {
-  'Authorization': `Bearer ${apiKey}`
+type Address = {
+  address: string;
+  chainId: string;
+  name: string;
+  objectId: string;
 };
 
-const SobolAPI = async () => {
-  try {
-    // Fetch data from the Sobol API
-    const addressResponse = await fetch(proxiedAddressUrl, { headers });
-    const teamResponse = await fetch(proxiedTeamsUrl, { headers });
-    // Check if the request was successful
-    if (!addressResponse.ok) {
-      console.log(addressResponse)
-      throw new Error(`HTTP error! status: ${addressResponse.status}`);
-    }
+const SobolAPI = () => {
+  const [sobolData, setSobolData] = useState<Address[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-    if (!teamResponse.ok) {
-      console.log(teamResponse)
-      throw new Error(`HTTP error! status: ${teamResponse.status}`);
-    }
+  // API and Proxy URLs
+  const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYXV0b21hdGVkIiwia2lkIjoiblNYdzJWenhmaSIsIm9pZCI6IkxtWTJLZ1pmcTQiLCJ1aWQiOiJHUnZfUWgxTGE0IiwiaWF0IjoxNzAzNDQzNDkyLCJleHAiOjE3MzQ5Nzk0OTJ9.m3AaDWMlO00vEd7v6VqRCR8F22_ujKdN1m9RVD24CHo';   // Secure your API Key properly
+  const addressesApiUrl = 'https://sobol.io/d/api/v1/org/LmY2KgZfq4/addresses';
+  const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+  const proxiedAddressUrl = `${proxyUrl}${addressesApiUrl}`;
+  const headers = {
+    'Authorization': `Bearer ${apiKey}`,
+    'X-Requested-With': 'XMLHttpRequest'
+  };
 
-    // Parse the JSON response
-    const addressData = await addressResponse.json();
-    const teamData = await teamResponse.json();
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(proxiedAddressUrl, { headers });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-    // Log the data to the console
-    console.log(addressData);
-    console.log(teamData);
-    return addressData; // Return the data for further processing if needed
-  } catch (error) {
-    // Log any errors to the console
-    console.error('Failed to fetch data from Sobol:', error);
-    throw error; // Re-throw the error for handling by the caller
-  }
+        const data: Address[] = await response.json();
+        setSobolData(data);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Failed to fetch data from Sobol:', error);
+        setError(error as Error);
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  return (
+    <div>
+      <h1>Sobol Data</h1>
+      {error ? (
+        <p>Failed to load data: {error.message}</p>
+      ) : isLoading ? (
+        <p>Loading...</p>
+      ) : (
+        <Table
+          headers={[
+            { id: 'col1', label: 'Name' },
+            { id: 'col2', label: 'Address' },
+            { id: 'col3', label: 'Chain ID' },
+            { id: 'col4', label: 'Object ID' },
+          ]}
+          rows={sobolData.map((address, index) => ({
+            id: `row${index}`,
+            cells: [
+              { content: address.name || 'N/A' },
+              { content: address.address },
+              { content: address.chainId },
+              { content: address.objectId },
+            ],
+          }))}
+        />
+      )}
+    </div>
+  );
 };
 
 export default SobolAPI;
